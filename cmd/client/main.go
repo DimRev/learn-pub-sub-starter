@@ -37,6 +37,15 @@ func main() {
 
 	gameState := gamelogic.NewGameState(username)
 
+	pubsub.SubscribeJSON(
+		conn,                        // conn
+		routing.ExchangePerilDirect, //exchange
+		queueName,                   // queueName
+		routing.PauseKey,            // key
+		pubsub.SimpleQueueTransient, //simpleQueueType
+		handlerPause(gameState),     //handler
+	)
+
 	for {
 		words := gamelogic.GetInput()
 		if len(words) == 0 {
