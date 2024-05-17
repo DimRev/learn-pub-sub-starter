@@ -6,8 +6,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Acktype int
-
 type simpleQueueType int
 
 const (
