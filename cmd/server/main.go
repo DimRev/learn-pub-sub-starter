@@ -27,14 +27,6 @@ func main() {
 
 	gamelogic.PrintServerHelp()
 
-	// signalChan := make(chan os.Signal, 1)
-	// signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
-	// stopChan := make(chan bool)
-
-	// go func() {
-	// 	<-signalChan
-	// 	stopChan <- true
-	// }()
 	for {
 		words := gamelogic.GetInput()
 		if len(words) == 0 {
