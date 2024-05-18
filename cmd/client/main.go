@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
@@ -70,7 +71,7 @@ func main() {
 		routing.WarRecognitionsPrefix, // queueName
 		warAnyRoute,                   // key
 		pubsub.SimpleQueueDurable,     // simpleQueueType
-		handlerWar(gameState),         // handler
+		handlerWar(gameState, ch),     // handler
 	)
 	if err != nil {
 		log.Fatalf("Failed to subscribe to war queue: %v", err)
@@ -130,4 +131,17 @@ func main() {
 			fmt.Println("Command isn't available, try again.")
 		}
 	}
+}
+
+func publishGameLog(publishCh *amqp.Channel, username, msg string) error {
+	return pubsub.PublishGob(
+		publishCh,
+		routing.ExchangePerilTopic,
+		routing.GameLogSlug+"."+username,
+		routing.GameLog{
+			Username:    username,
+			CurrentTime: time.Now(),
+			Message:     msg,
+		},
+	)
 }
