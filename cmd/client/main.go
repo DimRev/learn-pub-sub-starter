@@ -34,31 +34,49 @@ func main() {
 	pauseUserRoute := fmt.Sprintf("%v.%v", routing.PauseKey, username)
 	armyMoveUserRoute := fmt.Sprintf("%v.%v", routing.ArmyMovesPrefix, username)
 	armyMoveAnyRoute := fmt.Sprintf("%v.*", routing.ArmyMovesPrefix)
+	warAnyRoute := fmt.Sprintf("%v.*", routing.WarRecognitionsPrefix)
 
-	pubsub.DeclareAndBind(
+	// bind: pause exchange - pause.username
+	_, _, err = pubsub.DeclareAndBind(
 		conn,                        // conn
 		routing.ExchangePerilDirect, // exchange
 		pauseUserRoute,              // queueName
 		routing.PauseKey,            // key
 		pubsub.SimpleQueueTransient, // simpleQueueType
 	)
+	if err != nil {
+		log.Fatalf("Failed to declare and bind pause queue: %v", err)
+	}
 
 	gameState := gamelogic.NewGameState(username)
 
-	// army_move.*
+	// subscribe: army_move.*
 	err = pubsub.SubscribeJSON(
 		conn,                        // conn
 		routing.ExchangePerilTopic,  // exchange
 		armyMoveUserRoute,           // queueName
 		armyMoveAnyRoute,            // key
 		pubsub.SimpleQueueTransient, // simpleQueueType
-		handlerMove(gameState),      // handler
+		handlerMove(gameState, ch),  // handler
 	)
 	if err != nil {
 		log.Fatalf("Failed to subscribe to army_move queue: %v", err)
 	}
 
-	// pause.*
+	// subscribe: war.*
+	err = pubsub.SubscribeJSON(
+		conn,                          // conn
+		routing.ExchangePerilTopic,    // exchange
+		routing.WarRecognitionsPrefix, // queueName
+		warAnyRoute,                   // key
+		pubsub.SimpleQueueDurable,     // simpleQueueType
+		handlerWar(gameState),         // handler
+	)
+	if err != nil {
+		log.Fatalf("Failed to subscribe to war queue: %v", err)
+	}
+
+	// subscribe: pause.username
 	err = pubsub.SubscribeJSON(
 		conn,                        // conn
 		routing.ExchangePerilDirect, // exchange
