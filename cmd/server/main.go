@@ -25,6 +25,18 @@ func main() {
 		log.Fatalf("Could not setup a channel with RabbitMQ: %v", err)
 	}
 
+	err = pubsub.SubscribeGob(
+		conn,
+		routing.ExchangePerilTopic,
+		routing.GameLogSlug,
+		routing.GameLogSlug+".*",
+		pubsub.SimpleQueueDurable,
+		handlerLogs(),
+	)
+	if err != nil {
+		log.Fatalf("could not starting consuming logs: %v", err)
+	}
+
 	gamelogic.PrintServerHelp()
 
 	_, queue, err := pubsub.DeclareAndBind(
@@ -46,16 +58,26 @@ func main() {
 		}
 		switch words[0] {
 		case "pause":
-			err = pubsub.PublishJSON(ch, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{
-				IsPaused: true,
-			})
+			err = pubsub.PublishJSON(
+				ch,
+				routing.ExchangePerilDirect,
+				routing.PauseKey,
+				routing.PlayingState{
+					IsPaused: true,
+				},
+			)
 			if err != nil {
 				log.Fatalf("Could not publish: %v", err)
 			}
 		case "resume":
-			err = pubsub.PublishJSON(ch, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{
-				IsPaused: false,
-			})
+			err = pubsub.PublishJSON(
+				ch,
+				routing.ExchangePerilDirect,
+				routing.PauseKey,
+				routing.PlayingState{
+					IsPaused: false,
+				},
+			)
 			if err != nil {
 				log.Fatalf("Could not publish: %v", err)
 			}
